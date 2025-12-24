@@ -5,10 +5,54 @@ import cv2
 import numpy as np
 
 
+
+def get_posts(headers: dict[str, str], subreddit: str, max_pages: int):
+    """
+    Gets top posts (all time) from old.reddit from all pages according to the page limit.
+    """
+    all_posts = []
+    after = None
+    count = 0
+
+    for page in range(max_pages):
+        if after:
+            url = (
+                f"https://old.reddit.com/r/{subreddit}/top/"
+                f"?sort=top&t=all&count={count}&after={after}"
+            )
+        else:
+            url = f"https://old.reddit.com/r/{subreddit}/top/?sort=top&t=all"
+
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            resp.raise_for_status()
+
+            soup = BeautifulSoup(resp.text, "lxml")
+            posts = soup.select(".thing")
+
+            if not posts:
+                break 
+
+            all_posts.extend(posts)
+
+            
+            after = posts[-1].get("data-fullname")
+            count += len(posts)
+
+            time.sleep(2)  
+
+        except Exception as e:
+            print(f"[ERROR] {e}")
+            break
+
+    return all_posts
+
+'''
+
 def get_posts(headers:dict[str,str],subreddit:str):
-    '''
+    
     Gets posts from  "all time top posts" category and returns all the posts
-    '''
+    
 
     try:
         url = f"https://old.reddit.com/r/{subreddit}/top/?sort=top&t=all"
@@ -20,6 +64,7 @@ def get_posts(headers:dict[str,str],subreddit:str):
 
 
     return posts
+'''
 
 def get_comments_score_permalink(post):
     """
